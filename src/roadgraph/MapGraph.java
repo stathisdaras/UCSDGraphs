@@ -10,6 +10,7 @@ package roadgraph;
 
 import geography.GeographicPoint;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -28,13 +29,27 @@ public class MapGraph {
 	
 	HashMap<GeographicPoint, MapNode> vertices;
 	List<MapEdge> edges;
+	MapNode[][] adjNodes;
+	private int width;
+	private int height;
+	
+	private final int DEFAULT_SIZE = 10;
 	
 	/** 
 	 * Create a new empty MapGraph 
 	 */
 	public MapGraph()
 	{
-		// TODO: Implement in this constructor in WEEK 2
+		vertices = new HashMap<GeographicPoint, MapNode>();
+		edges= new ArrayList<MapEdge>();
+		adjNodes = new MapNode[DEFAULT_SIZE][DEFAULT_SIZE];
+	}
+	
+	public MapGraph(int width, int height)
+	{
+		vertices = new HashMap<GeographicPoint, MapNode>();
+		edges= new ArrayList<MapEdge>();
+		adjNodes = new MapNode[width][height];
 	}
 	
 	/**
@@ -227,6 +242,20 @@ public class MapGraph {
 
 		*/
 		
+	}
+	
+	public void printMapGraph(){
+		for (int r = 0; r < height; r++) {
+			for (int c = 0; c < width; c++) {
+				if (adjNodes[r][c] == null) {
+					System.out.print('*');
+				} else {
+					System.out.print(adjNodes[r][c].getDisplayChar());
+				}
+			}
+			System.out.print("\n");
+		}
+
 	}
 	
 }
