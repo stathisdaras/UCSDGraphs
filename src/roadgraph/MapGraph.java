@@ -43,6 +43,8 @@ public class MapGraph {
 		vertices = new HashMap<GeographicPoint, MapNode>();
 		edges= new ArrayList<MapEdge>();
 		adjNodes = new MapNode[DEFAULT_SIZE][DEFAULT_SIZE];
+		height = DEFAULT_SIZE;
+		width = DEFAULT_SIZE;
 	}
 	
 	public MapGraph(int width, int height)
@@ -50,6 +52,8 @@ public class MapGraph {
 		vertices = new HashMap<GeographicPoint, MapNode>();
 		edges= new ArrayList<MapEdge>();
 		adjNodes = new MapNode[width][height];
+		height = DEFAULT_SIZE;
+		width = DEFAULT_SIZE;
 	}
 	
 	/**
@@ -58,8 +62,7 @@ public class MapGraph {
 	 */
 	public int getNumVertices()
 	{
-		//TODO: Implement this method in WEEK 2
-		return 0;
+		return vertices.size();
 	}
 	
 	/**
@@ -93,8 +96,8 @@ public class MapGraph {
 	 */
 	public boolean addVertex(GeographicPoint location)
 	{
-		// TODO: Implement this method in WEEK 2
-		return false;
+		adjNodes[(int) location.getX()+1][(int) location.getY()+1] = new MapNode(location);
+		return vertices.put(location, new MapNode(location)) == null;
 	}
 	
 	/**
@@ -111,9 +114,7 @@ public class MapGraph {
 	 */
 	public void addEdge(GeographicPoint from, GeographicPoint to, String roadName,
 			String roadType, double length) throws IllegalArgumentException {
-
-		//TODO: Implement this method in WEEK 2
-		
+		edges.add(new MapEdge(from, to, roadName, roadType, length));
 	}
 	
 
@@ -224,6 +225,7 @@ public class MapGraph {
 		System.out.print("DONE. \nLoading the map...");
 		GraphLoader.loadRoadMap("data/testdata/simpletest.map", theMap);
 		System.out.println("DONE.");
+		theMap.printGraph();
 		
 		// You can use this method for testing.  
 		
@@ -244,7 +246,7 @@ public class MapGraph {
 		
 	}
 	
-	public void printMapGraph(){
+	public void printGraph(){
 		for (int r = 0; r < height; r++) {
 			for (int c = 0; c < width; c++) {
 				if (adjNodes[r][c] == null) {
@@ -257,5 +259,11 @@ public class MapGraph {
 		}
 
 	}
+	
+	/*public void printGraph(){
+		for (MapNode v : vertices.values()) {
+			
+		}
+	}*/
 	
 }

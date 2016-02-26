@@ -38,6 +38,13 @@ public class MapNode {
 		neighbors = new LinkedList<MapNode>();
 		displayChar = EMPTY;
 	}
+	
+	public MapNode(GeographicPoint location)
+	{
+		this.location = location;
+		neighbors = new LinkedList<MapNode>();
+		displayChar = EMPTY;
+	}
 
 	public void addNeighbor(MapNode neighbor) 
 	{
