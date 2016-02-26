@@ -71,4 +71,19 @@ public class MapNode {
 	public double getColumn() {
 		return location.getY();
 	}
+
+	public GeographicPoint getLocation() {
+		return location;
+	}
+
+	public void setLocation(GeographicPoint location) {
+		this.location = location;
+	}
+	
+	@Override
+	public String toString() {
+		return location.toString();
+	};
+	
+	
 }

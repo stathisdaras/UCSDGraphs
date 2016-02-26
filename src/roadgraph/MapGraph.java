@@ -12,7 +12,9 @@ import geography.GeographicPoint;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -29,7 +31,7 @@ public class MapGraph {
 	
 	HashMap<GeographicPoint, MapNode> vertices;
 	List<MapEdge> edges;
-	MapNode[][] adjNodes;
+	Map<GeographicPoint,ArrayList<MapNode>> adjListsMap;
 	private int width;
 	private int height;
 	
@@ -42,7 +44,7 @@ public class MapGraph {
 	{
 		vertices = new HashMap<GeographicPoint, MapNode>();
 		edges= new ArrayList<MapEdge>();
-		adjNodes = new MapNode[DEFAULT_SIZE][DEFAULT_SIZE];
+		adjListsMap = new HashMap<GeographicPoint,ArrayList<MapNode>>();
 		height = DEFAULT_SIZE;
 		width = DEFAULT_SIZE;
 	}
@@ -51,7 +53,7 @@ public class MapGraph {
 	{
 		vertices = new HashMap<GeographicPoint, MapNode>();
 		edges= new ArrayList<MapEdge>();
-		adjNodes = new MapNode[width][height];
+		adjListsMap = new HashMap<GeographicPoint,ArrayList<MapNode>>();
 		height = DEFAULT_SIZE;
 		width = DEFAULT_SIZE;
 	}
@@ -71,8 +73,11 @@ public class MapGraph {
 	 */
 	public Set<GeographicPoint> getVertices()
 	{
-		//TODO: Implement this method in WEEK 2
-		return null;
+		Set<GeographicPoint> geographicPoints = new LinkedHashSet<GeographicPoint>();
+		for (MapNode node : vertices.values() ) {
+			geographicPoints.add(node.getLocation());
+		}
+		return geographicPoints;
 	}
 	
 	/**
@@ -81,8 +86,7 @@ public class MapGraph {
 	 */
 	public int getNumEdges()
 	{
-		//TODO: Implement this method in WEEK 2
-		return 0;
+		return edges.size();
 	}
 
 	
@@ -96,7 +100,7 @@ public class MapGraph {
 	 */
 	public boolean addVertex(GeographicPoint location)
 	{
-		adjNodes[(int) location.getX()+1][(int) location.getY()+1] = new MapNode(location);
+		adjListsMap.put(location, new ArrayList<MapNode>());
 		return vertices.put(location, new MapNode(location)) == null;
 	}
 	
@@ -114,6 +118,8 @@ public class MapGraph {
 	 */
 	public void addEdge(GeographicPoint from, GeographicPoint to, String roadName,
 			String roadType, double length) throws IllegalArgumentException {
+		// Update adjacency matrix
+		adjListsMap.get(from).add(new MapNode(to));
 		edges.add(new MapEdge(from, to, roadName, roadType, length));
 	}
 	
@@ -247,17 +253,13 @@ public class MapGraph {
 	}
 	
 	public void printGraph(){
-		for (int r = 0; r < height; r++) {
-			for (int c = 0; c < width; c++) {
-				if (adjNodes[r][c] == null) {
-					System.out.print('*');
-				} else {
-					System.out.print(adjNodes[r][c].getDisplayChar());
-				}
+		for (GeographicPoint v : getVertices()) {
+			System.out.println("Vertex:" + v);
+			System.out.println("Neighbors:");
+			for (MapNode neighbor : adjListsMap.get(v)) {
+				System.out.println(neighbor);
 			}
-			System.out.print("\n");
 		}
-
 	}
 	
 	/*public void printGraph(){
