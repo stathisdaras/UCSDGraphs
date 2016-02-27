@@ -210,7 +210,9 @@ public class Maze {
 
 		HashSet<MazeNode> visited = new HashSet<MazeNode>();
 		Queue<MazeNode> toExplore = new LinkedList<MazeNode>();
+		
 		HashMap<MazeNode, MazeNode> parentMap = new HashMap<MazeNode, MazeNode>();
+	
 		toExplore.add(start);
 		boolean found = false;
 		while (!toExplore.isEmpty()) {

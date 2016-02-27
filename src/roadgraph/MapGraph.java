@@ -8,17 +8,21 @@
 package roadgraph;
 
 
-import geography.GeographicPoint;
-
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import geography.GeographicPoint;
 import util.GraphLoader;
+import week2example.MazeNode;
 
 /**
  * @author UCSD MOOC development team and YOU
@@ -32,8 +36,6 @@ public class MapGraph {
 	HashMap<GeographicPoint, MapNode> vertices;
 	List<MapEdge> edges;
 	Map<GeographicPoint,ArrayList<MapNode>> adjListsMap;
-	private int width;
-	private int height;
 	
 	private final int DEFAULT_SIZE = 10;
 	
@@ -45,8 +47,6 @@ public class MapGraph {
 		vertices = new HashMap<GeographicPoint, MapNode>();
 		edges= new ArrayList<MapEdge>();
 		adjListsMap = new HashMap<GeographicPoint,ArrayList<MapNode>>();
-		height = DEFAULT_SIZE;
-		width = DEFAULT_SIZE;
 	}
 	
 	public MapGraph(int width, int height)
@@ -119,7 +119,7 @@ public class MapGraph {
 	public void addEdge(GeographicPoint from, GeographicPoint to, String roadName,
 			String roadType, double length) throws IllegalArgumentException {
 		// Update adjacency matrix
-		adjListsMap.get(from).add(new MapNode(to));
+		adjListsMap.get(from).add(vertices.get(to));
 		edges.add(new MapEdge(from, to, roadName, roadType, length));
 	}
 	
@@ -148,14 +148,78 @@ public class MapGraph {
 	public List<GeographicPoint> bfs(GeographicPoint start, 
 			 					     GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
-		// TODO: Implement this method in WEEK 2
+		MapNode startNode = vertices.get(start);
+		MapNode goalNode = vertices.get(goal);
+		
+		if (startNode == null || goalNode == null) {
+			System.out.println("Start or goal node is null!  No path exists.");
+			return new LinkedList<GeographicPoint>();
+		}
+		
+		HashMap<MapNode, MapNode> parentMap = new HashMap<MapNode, MapNode>();
+		boolean found = bfsSearch(startNode, goalNode, parentMap);
+		
+		if (!found) {
+			System.out.println("No path exists");
+			return new LinkedList<GeographicPoint>();
+		}
 		
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
 
-		return null;
+		return constructPath(startNode, goalNode, parentMap);
 	}
 	
+
+	private boolean bfsSearch(MapNode startNode, MapNode goalNode,
+			HashMap<MapNode, MapNode> parentMap) {
+		
+		Queue<MapNode> toExplore = new LinkedList<MapNode>();
+		HashSet<MapNode> visited = new HashSet<MapNode>();
+		
+		toExplore.add(startNode);
+		boolean found = false;
+		while (!toExplore.isEmpty()) {
+			MapNode curr = toExplore.remove();
+			if (curr == goalNode) {
+				found = true;
+				break;
+			}
+			List<MapNode> neighbors = adjListsMap.get(curr.getLocation());
+			ListIterator<MapNode> it = neighbors.listIterator(neighbors.size());
+			while (it.hasPrevious()) {
+				MapNode next = it.previous();
+				if (!visited.contains(next)) {
+					visited.add(next);
+					parentMap.put(next, curr);
+					toExplore.add(next);
+				}
+			}
+		}
+		
+		return found;
+	}
+
+	/*private List<GeographicPoint> getNeigborsFromGeographicPoint(GeographicPoint curr) {
+		List<GeographicPoint> neigbors = new LinkedList<GeographicPoint>();
+		ArrayList<MapNode> neighborNodes =  adjListsMap.get(curr);
+		for (MapNode mapNode : neighborNodes) {
+			neigbors.add(mapNode.getLocation());
+		}
+		return neigbors;
+	}*/
+
+	private List<GeographicPoint> constructPath(MapNode startNode, MapNode goalNode,
+			HashMap<MapNode, MapNode> parentMap) {
+		LinkedList<GeographicPoint> path = new LinkedList<GeographicPoint>();
+		MapNode curr = goalNode;
+		while (curr != startNode) {
+			path.addFirst(curr.getLocation());
+			curr = parentMap.get(curr);
+		}
+		path.addFirst(startNode.getLocation());
+		return path;
+	}
 
 	/** Find the path from start to goal using Dijkstra's algorithm
 	 * 
@@ -233,6 +297,9 @@ public class MapGraph {
 		System.out.println("DONE.");
 		theMap.printGraph();
 		
+		List<GeographicPoint> path = theMap.bfs(new GeographicPoint(1, 1), new GeographicPoint(6.5, 0));
+		theMap.setPath(path);
+		
 		// You can use this method for testing.  
 		
 		/* Use this code in Week 3 End of Week Quiz
@@ -252,6 +319,14 @@ public class MapGraph {
 		
 	}
 	
+	private void setPath(List<GeographicPoint> path) {
+		System.out.println("BFS PATH:");
+		for (GeographicPoint n : path) {
+			System.out.println(n);
+		}
+
+	}
+
 	public void printGraph(){
 		for (GeographicPoint v : getVertices()) {
 			System.out.println("Vertex:" + v);

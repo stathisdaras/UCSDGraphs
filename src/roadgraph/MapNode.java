@@ -13,11 +13,6 @@ public class MapNode {
 
 	private char displayChar;
 	
-	public static final char EMPTY = '-';
-	public static final char PATH = 'o';
-	public static final char START = 'S';
-	public static final char GOAL = 'G';
-	
 	/**
 	 * @return the displayChar
 	 */
@@ -36,14 +31,12 @@ public class MapNode {
 	{
 		this.location.setLocation(row, col);
 		neighbors = new LinkedList<MapNode>();
-		displayChar = EMPTY;
 	}
 	
 	public MapNode(GeographicPoint location)
 	{
 		this.location = location;
 		neighbors = new LinkedList<MapNode>();
-		displayChar = EMPTY;
 	}
 
 	public void addNeighbor(MapNode neighbor) 
