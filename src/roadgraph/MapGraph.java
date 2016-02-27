@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 
 import geography.GeographicPoint;
 import util.GraphLoader;
-import week2example.MazeNode;
 
 /**
  * @author UCSD MOOC development team and YOU
@@ -161,7 +160,7 @@ public class MapGraph {
 		
 		if (!found) {
 			System.out.println("No path exists");
-			return new LinkedList<GeographicPoint>();
+			return null;
 		}
 		
 		// Hook for visualization.  See writeup.
@@ -293,11 +292,12 @@ public class MapGraph {
 		System.out.print("Making a new map...");
 		MapGraph theMap = new MapGraph();
 		System.out.print("DONE. \nLoading the map...");
-		GraphLoader.loadRoadMap("data/testdata/simpletest.map", theMap);
+		//GraphLoader.loadRoadMap("data/testdata/simpletest.map", theMap);
+		GraphLoader.loadRoadMap("data/graders/mod2/map2.txt", theMap);
 		System.out.println("DONE.");
 		theMap.printGraph();
 		
-		List<GeographicPoint> path = theMap.bfs(new GeographicPoint(1, 1), new GeographicPoint(6.5, 0));
+		List<GeographicPoint> path = theMap.bfs(new GeographicPoint(6, 6), new GeographicPoint(0, 0));
 		theMap.setPath(path);
 		
 		// You can use this method for testing.  
@@ -320,9 +320,14 @@ public class MapGraph {
 	}
 	
 	private void setPath(List<GeographicPoint> path) {
-		System.out.println("BFS PATH:");
-		for (GeographicPoint n : path) {
-			System.out.println(n);
+		if (path != null) {
+			System.out.println("BFS PATH:");
+			for (GeographicPoint n : path) {
+				System.out.println(n);
+			}
+		}
+		else {
+			System.out.println("null");
 		}
 
 	}
