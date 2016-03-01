@@ -31,6 +31,7 @@ public class MapGraph {
 	// that contain those nodes.
 	private HashMap<GeographicPoint, MapNode> pointNodeMap;
 	private HashSet<MapEdge> edges;
+	private double distance;
 
 	/**
 	 * Create a new empty MapGraph
@@ -332,8 +333,8 @@ public class MapGraph {
 		HashMap<MapNode, MapNode> parentMap = new HashMap<MapNode, MapNode>();
 		PriorityQueue<MapNode> toExplore = new PriorityQueue<MapNode>();
 		HashSet<MapNode> visited = new HashSet<MapNode>();
+		distance = Double.POSITIVE_INFINITY;
 		MapNode curr = null;
-		double distance = Double.POSITIVE_INFINITY;
 		for (GeographicPoint pt : getVertices()) {
 			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
 			pointNodeMap.get(pt).setActualDistance(Double.POSITIVE_INFINITY);
@@ -359,7 +360,6 @@ public class MapGraph {
 						MapEdge edge = findEdgeByStartEndPoints(curr.getLocation(), neighbor.getLocation());
 						if (edge.getLength() < distance) {
 							distance += edge.getLength();
-							neighbor.setDistance(distance);
 							// update map, distance, queue
 							parentMap.put(neighbor, curr);
 							neighbor.setDistance(distance);
