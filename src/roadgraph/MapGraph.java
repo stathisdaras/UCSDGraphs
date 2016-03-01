@@ -333,6 +333,7 @@ public class MapGraph {
 		PriorityQueue<MapNode> toExplore = new PriorityQueue<MapNode>();
 		HashSet<MapNode> visited = new HashSet<MapNode>();
 		MapNode curr = null;
+		double distance = Double.POSITIVE_INFINITY;
 		for (GeographicPoint pt : getVertices()) {
 			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
 			pointNodeMap.get(pt).setActualDistance(Double.POSITIVE_INFINITY);
@@ -355,7 +356,10 @@ public class MapGraph {
 				for (MapNode neighbor : neighbors) {
 					if (!visited.contains(neighbor)) {
 						// if path through curr to n is shorter
-						if (neighbor.get) {
+						MapEdge edge = findEdgeByStartEndPoints(curr.getLocation(), neighbor.getLocation());
+						if (edge.getLength() < distance) {
+							distance += edge.getLength();
+							neighbor.setDistance(distance);
 							// update map, distance, queue
 							parentMap.put(neighbor, curr);
 							neighbor.setDistance(distance);
