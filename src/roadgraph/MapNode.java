@@ -30,6 +30,9 @@ class MapNode implements Comparable
 	
 	/** the actual distance of this node from start (used in Week 3 algorithms) */
 	private double actualDistance;
+
+	/** Flag to mark a node that already has incremented */
+	private boolean incremented = false;
 	
 	// END WEEK 3 SOLUTIONS
 	
@@ -143,6 +146,28 @@ class MapNode implements Comparable
 		// convert to map node, may throw exception
 		MapNode m = (MapNode)o; 
 		return ((Double)this.getDistance()).compareTo((Double) m.getDistance());
+	}
+
+	// Every node modifies its distance accordingly, this way its distance won't increment
+	// more than once, but will be reduced if new length is shorter.
+	public void modifyDistance(double length) {
+		/*System.out.println("Incrementing: " + length);
+		System.out.println(this);*/
+		if (!this.incremented) {
+			//System.out.println("Incremented: " + length);
+			if (this.distance == Double.POSITIVE_INFINITY) {
+				this.distance = length;
+			}
+			else {
+				this.distance += length;
+				this.incremented = true;
+			}
+		}
+		// if already incremented once, then it could possibly be reduced
+		else{
+/*			System.out.println("CHANGED from" + this.getDistance() + " to"  + length);
+*/			this.distance = length;
+		}
 	}
 
 	// END WEEK 3 SOLUTIONS

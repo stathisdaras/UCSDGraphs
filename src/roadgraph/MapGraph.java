@@ -31,7 +31,6 @@ public class MapGraph {
 	// that contain those nodes.
 	private HashMap<GeographicPoint, MapNode> pointNodeMap;
 	private HashSet<MapEdge> edges;
-	private double distance;
 
 	/**
 	 * Create a new empty MapGraph
@@ -203,8 +202,7 @@ public class MapGraph {
 	 * @return The list of intersections that form the shortest path from start
 	 *         to goal (including both start and goal).
 	 */
-	public List<GeographicPoint> bfs(GeographicPoint start, GeographicPoint goal,
-			Consumer<GeographicPoint> nodeSearched) {
+	public List<GeographicPoint> bfs(GeographicPoint start, GeographicPoint goal, Consumer<GeographicPoint> nodeSearched) {
 		// Setup - check validity of inputs
 		if (start == null || goal == null)
 			throw new NullPointerException("Cannot find route from or to null node");
@@ -312,8 +310,7 @@ public class MapGraph {
 	 * @return The list of intersections that form the shortest path from start
 	 *         to goal (including both start and goal).
 	 */
-	public List<GeographicPoint> dijkstra(GeographicPoint start, GeographicPoint goal,
-			Consumer<GeographicPoint> nodeSearched) {
+	public List<GeographicPoint> dijkstra(GeographicPoint start, GeographicPoint goal, Consumer<GeographicPoint> nodeSearched) {
 		// Setup - check validity of inputs
 		if (start == null || goal == null)
 			throw new NullPointerException("Cannot find route from or to null node");
@@ -333,20 +330,25 @@ public class MapGraph {
 		HashMap<MapNode, MapNode> parentMap = new HashMap<MapNode, MapNode>();
 		PriorityQueue<MapNode> toExplore = new PriorityQueue<MapNode>();
 		HashSet<MapNode> visited = new HashSet<MapNode>();
-		distance = Double.POSITIVE_INFINITY;
 		MapNode curr = null;
 		for (GeographicPoint pt : getVertices()) {
 			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
-			pointNodeMap.get(pt).setActualDistance(Double.POSITIVE_INFINITY);
 		}
-
+		
 		// Enqueue {S,0} onto the PQ
-		startNode.setDistance(0);
-		startNode.setActualDistance(0);
 		toExplore.add(startNode);
+		
+		// Dijkstra implementation
 		while (!toExplore.isEmpty()) {
 			curr = toExplore.remove();
+			Double startDistance = findDistanceByStartEndPoints(startNode.getLocation(), curr.getLocation());
+			// Not neighbor to start node
+			if (startDistance != null) {
+				curr.setDistance(startDistance);
+			}
 			// hook for visualization
+			/*System.out.println("To explore:");
+			System.out.println(curr);*/
 			nodeSearched.accept(curr.getLocation());
 			// if (curr is not visited)
 			if (!visited.contains(curr)) {
@@ -356,13 +358,11 @@ public class MapGraph {
 				Set<MapNode> neighbors = getNeighbors(curr);
 				for (MapNode neighbor : neighbors) {
 					if (!visited.contains(neighbor)) {
+						Double distance = findDistanceByStartEndPoints(curr.getLocation(), neighbor.getLocation());
 						// if path through curr to n is shorter
-						MapEdge edge = findEdgeByStartEndPoints(curr.getLocation(), neighbor.getLocation());
-						if (edge.getLength() < distance) {
-							distance += edge.getLength();
-							// update map, distance, queue
+						neighbor.modifyDistance(distance);
+						if (pathToNeigborIsShorter(neighbor, toExplore)) {
 							parentMap.put(neighbor, curr);
-							neighbor.setDistance(distance);
 							toExplore.add(neighbor);
 						}
 					}
@@ -370,7 +370,7 @@ public class MapGraph {
 
 			}
 		}
-
+		
 		if (!curr.equals(endNode)) {
 			System.out.println("No path found from " + start + " to " + goal);
 			return null;
@@ -380,6 +380,19 @@ public class MapGraph {
 		List<GeographicPoint> path = reconstructPath(parentMap, startNode, endNode);
 
 		return path;
+	}
+
+
+	private boolean pathToNeigborIsShorter(MapNode neighbor, PriorityQueue<MapNode> toExplore) {
+		if (toExplore.isEmpty()) {
+			return true;
+		}
+		for (MapNode mapNode : toExplore) {
+			if (neighbor.getDistance() <= mapNode.getDistance()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -412,8 +425,7 @@ public class MapGraph {
 	 * @return The list of intersections that form the shortest path from start
 	 *         to goal (including both start and goal).
 	 */
-	public List<GeographicPoint> aStarSearch(GeographicPoint start, GeographicPoint goal,
-			Consumer<GeographicPoint> nodeSearched) {
+	public List<GeographicPoint> aStarSearch(GeographicPoint start, GeographicPoint goal, Consumer<GeographicPoint> nodeSearched) {
 		// TODO: Implement this method in WEEK 3
 
 		// Hook for visualization. See writeup.
@@ -422,11 +434,13 @@ public class MapGraph {
 		return null;
 	}
 
-	public MapEdge findEdgeByStartEndPoints(GeographicPoint start, GeographicPoint end) {
+	public Double findDistanceByStartEndPoints(GeographicPoint start, GeographicPoint end) {
 		for (MapEdge e : this.edges) {
-			if (e.getEndNode().getLocation().equals(end)
-					&& e.getOtherNode(pointNodeMap.get(end)).getLocation().equals(start)) {
-				return e;
+			if (e.getEndNode().getLocation().equals(end) && e.getOtherNode(pointNodeMap.get(end)).getLocation().equals(start)) {
+				return e.getLength();
+			}
+			if (start.equals(end)) {
+				return 0.0; 
 			}
 		}
 		return null;
@@ -466,19 +480,19 @@ public class MapGraph {
 		GraphLoader.loadRoadMap("data/testdata/simpletest.map", theMap);
 		System.out.println("DONE.");
 
-		MapEdge edge = theMap.findEdgeByStartEndPoints(new GeographicPoint(5.0, 1.0), new GeographicPoint(4.0, 0.0));
+		// MapEdge edge = theMap.findEdgeByStartEndPoints(new
+		// GeographicPoint(5.0, 1.0), new GeographicPoint(4.0, 0.0));
 
-		System.out.println(theMap);
+		// System.out.println(theMap);
 		// GeographicPoint start = new GeographicPoint(32.868629, -117.215393);
 		// GeographicPoint end = new GeographicPoint(32.868629, -117.215393);
 
-		// List<GeographicPoint> route = theMap.dijkstra(new
-		// GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+		List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
 
 		// List<GeographicPoint> route = theMap.dijkstra(start,end);
 		// List<GeographicPoint> route2 = theMap.aStarSearch(start,end);
 
-		//System.out.println(route);
+		System.out.println(route);
 
 	}
 
