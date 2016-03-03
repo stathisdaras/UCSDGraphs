@@ -31,6 +31,7 @@ public class MapGraph {
 	// that contain those nodes.
 	private HashMap<GeographicPoint, MapNode> pointNodeMap;
 	private HashSet<MapEdge> edges;
+	private int visits;
 
 	/**
 	 * Create a new empty MapGraph
@@ -334,11 +335,11 @@ public class MapGraph {
 		for (GeographicPoint pt : getVertices()) {
 			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
 		}
-		
+
 		// Enqueue {S,0} onto the PQ
 		startNode.setDistance(0.0);
 		toExplore.add(startNode);
-		
+
 		// Dijkstra implementation
 		while (!toExplore.isEmpty()) {
 			curr = toExplore.remove();
@@ -353,8 +354,10 @@ public class MapGraph {
 				for (MapNode neighbor : neighbors) {
 					if (!visited.contains(neighbor)) {
 						// Find distance betwwen neigbor and current node
-						Double distanceFromCurrent = findDistanceByStartEndPoints(curr.getLocation(), neighbor.getLocation());
-						// Compare old node distance with distance from current node added to distance of current node from the start node
+						Double distanceFromCurrent = findDistanceBetweenNeighbors(curr.getLocation(), neighbor.getLocation());
+						// Compare old node distance with distance from current
+						// node added to distance of current node from the start
+						// node
 						if (distanceFromCurrent + curr.getDistance() < neighbor.getDistance()) {
 							neighbor.setDistance(distanceFromCurrent + curr.getDistance());
 							parentMap.put(neighbor, curr);
@@ -365,7 +368,7 @@ public class MapGraph {
 
 			}
 		}
-		
+
 		if (!curr.equals(endNode)) {
 			System.out.println("No path found from " + start + " to " + goal);
 			return null;
@@ -376,7 +379,6 @@ public class MapGraph {
 
 		return path;
 	}
-
 
 	private boolean pathToNeigborIsShorter(MapNode neighbor, PriorityQueue<MapNode> toExplore) {
 		if (toExplore.isEmpty()) {
@@ -421,32 +423,118 @@ public class MapGraph {
 	 *         to goal (including both start and goal).
 	 */
 	public List<GeographicPoint> aStarSearch(GeographicPoint start, GeographicPoint goal, Consumer<GeographicPoint> nodeSearched) {
-		// TODO: Implement this method in WEEK 3
+		// Setup - check validity of inputs
+		if (start == null || goal == null)
+			throw new NullPointerException("Cannot find route from or to null node");
+		MapNode startNode = pointNodeMap.get(start);
+		MapNode endNode = pointNodeMap.get(goal);
+		if (startNode == null) {
+			System.err.println("Start node " + start + " does not exist");
+			return null;
+		}
+		if (endNode == null) {
+			System.err.println("End node " + goal + " does not exist");
+			return null;
+		}
 
-		// Hook for visualization. See writeup.
-		// nodeSearched.accept(next.getLocation());
+		// Initialize: Priority queue (PQ), visited HashSet, parent HashMap, and
+		HashMap<MapNode, MapNode> parentMap = new HashMap<MapNode, MapNode>();
+		PriorityQueue<MapNode> toExplore = new PriorityQueue<MapNode>();
+		HashSet<MapNode> visited = new HashSet<MapNode>();
+		MapNode curr = null;
+		visits = 0;
+		// Set distances to infinity.
+		for (GeographicPoint pt : getVertices()) {
+			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
+			pointNodeMap.get(pt).setActualDistance(Double.POSITIVE_INFINITY);
+		}
 
-		return null;
+		// Enqueue {S,0} onto the PQ
+		startNode.setDistance(0.0);
+		startNode.setActualDistance(0.0);
+		toExplore.add(startNode);
+
+		// Dijkstra implementation
+		while (!toExplore.isEmpty()) {
+			curr = toExplore.remove();
+			// hook for visualization
+			nodeSearched.accept(curr.getLocation());
+			// if (curr is not visited)
+			if (!visited.contains(curr)) {
+				visited.add(curr);
+				visits++;
+				if (curr.equals(endNode))
+					break;
+				Set<MapNode> neighbors = getNeighbors(curr);
+				for (MapNode neighbor : neighbors) {
+					if (!visited.contains(neighbor)) {
+						// Find distance betwwen neigbor and current node
+						Double distanceFromCurrent = findDistanceBetweenNeighbors(curr.getLocation(), neighbor.getLocation());
+						// Find straight line from node to target
+						Double distanceFromTarget = findStraightLineBetweenNodes(neighbor.getLocation(), endNode.getLocation());
+						// f(n) = g(n) + h(n)
+						if (distanceFromCurrent + curr.getActualDistance() < neighbor.getDistance()) {
+							neighbor.setActualDistance(distanceFromCurrent + curr.getActualDistance());
+							neighbor.setDistance(neighbor.getActualDistance() + distanceFromTarget);
+							parentMap.put(neighbor, curr);
+							toExplore.add(neighbor);
+						}
+					}
+				}
+
+			}
+		}
+
+		if (!curr.equals(endNode)) {
+			System.out.println("No path found from " + start + " to " + goal);
+			return null;
+		}
+
+		System.out.println("Visited " + visits + " nodes.");
+		visits = 0;
+		
+		// Reconstruct the parent path
+		List<GeographicPoint> path = reconstructPath(parentMap, startNode, endNode);
+
+		return path;
 	}
 
 	/**
-	 *  Find the distance between 2 nodes using the edge that connects them
-	 * @param start 
-	 * 				The starting location
+	 * Find the distance between 2 neighboring nodes using the edge that
+	 * connects them
+	 * 
+	 * @param start
+	 *            The starting location
 	 * @param end
-	 * 				The ending location
-	 * @return The double number representing the distance between the 2 selected nodes
+	 *            The ending location
+	 * @return The double number representing the distance between the 2
+	 *         selected nodes
 	 */
-	public Double findDistanceByStartEndPoints(GeographicPoint start, GeographicPoint end) {
+	public Double findDistanceBetweenNeighbors(GeographicPoint start, GeographicPoint end) {
 		for (MapEdge e : this.edges) {
 			if (e.getEndNode().getLocation().equals(end) && e.getOtherNode(pointNodeMap.get(end)).getLocation().equals(start)) {
 				return e.getLength();
 			}
 			if (start.equals(end)) {
-				return 0.0; 
+				return 0.0;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Find the straight line between 2 nodes using their geometric data
+	 * 
+	 * @param start
+	 *            The starting location
+	 * @param end
+	 *            The ending location
+	 * @return The double number representing the straight line between the 2
+	 *         selected nodes
+	 */
+	public Double findStraightLineBetweenNodes(GeographicPoint start, GeographicPoint end) {
+		return Math.sqrt(Math.pow(start.getX(), 2.0) + Math.pow(start.getY(), 2.0))
+				+ Math.sqrt(Math.pow(end.getX(), 2.0) + Math.pow(end.getY(), 2.0));
 	}
 
 	// main method for testing
@@ -490,12 +578,14 @@ public class MapGraph {
 		// GeographicPoint start = new GeographicPoint(32.868629, -117.215393);
 		// GeographicPoint end = new GeographicPoint(32.868629, -117.215393);
 
-		List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
-
+		//List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+		List<GeographicPoint> route = theMap.aStarSearch(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
 		// List<GeographicPoint> route = theMap.dijkstra(start,end);
 		// List<GeographicPoint> route2 = theMap.aStarSearch(start,end);
 
 		System.out.println(route);
+		
+		//System.out.println(theMap.findStraightLineBetweenNodes(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0)));
 
 	}
 
