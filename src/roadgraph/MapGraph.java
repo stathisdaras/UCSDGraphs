@@ -326,29 +326,23 @@ public class MapGraph {
 		}
 
 		// Initialize: Priority queue (PQ), visited HashSet, parent HashMap, and
-		// distances to infinity.
 		HashMap<MapNode, MapNode> parentMap = new HashMap<MapNode, MapNode>();
 		PriorityQueue<MapNode> toExplore = new PriorityQueue<MapNode>();
 		HashSet<MapNode> visited = new HashSet<MapNode>();
 		MapNode curr = null;
+		// Set distances to infinity.
 		for (GeographicPoint pt : getVertices()) {
 			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
 		}
 		
 		// Enqueue {S,0} onto the PQ
+		startNode.setDistance(0.0);
 		toExplore.add(startNode);
 		
 		// Dijkstra implementation
 		while (!toExplore.isEmpty()) {
 			curr = toExplore.remove();
-			Double startDistance = findDistanceByStartEndPoints(startNode.getLocation(), curr.getLocation());
-			// Not neighbor to start node
-			if (startDistance != null) {
-				curr.setDistance(startDistance);
-			}
 			// hook for visualization
-			/*System.out.println("To explore:");
-			System.out.println(curr);*/
 			nodeSearched.accept(curr.getLocation());
 			// if (curr is not visited)
 			if (!visited.contains(curr)) {
@@ -358,10 +352,11 @@ public class MapGraph {
 				Set<MapNode> neighbors = getNeighbors(curr);
 				for (MapNode neighbor : neighbors) {
 					if (!visited.contains(neighbor)) {
-						Double distance = findDistanceByStartEndPoints(curr.getLocation(), neighbor.getLocation());
-						// if path through curr to n is shorter
-						neighbor.modifyDistance(distance);
-						if (pathToNeigborIsShorter(neighbor, toExplore)) {
+						// Find distance betwwen neigbor and current node
+						Double distanceFromCurrent = findDistanceByStartEndPoints(curr.getLocation(), neighbor.getLocation());
+						// Compare old node distance with distance from current node added to distance of current node from the start node
+						if (distanceFromCurrent + curr.getDistance() < neighbor.getDistance()) {
+							neighbor.setDistance(distanceFromCurrent + curr.getDistance());
 							parentMap.put(neighbor, curr);
 							toExplore.add(neighbor);
 						}
@@ -434,6 +429,14 @@ public class MapGraph {
 		return null;
 	}
 
+	/**
+	 *  Find the distance between 2 nodes using the edge that connects them
+	 * @param start 
+	 * 				The starting location
+	 * @param end
+	 * 				The ending location
+	 * @return The double number representing the distance between the 2 selected nodes
+	 */
 	public Double findDistanceByStartEndPoints(GeographicPoint start, GeographicPoint end) {
 		for (MapEdge e : this.edges) {
 			if (e.getEndNode().getLocation().equals(end) && e.getOtherNode(pointNodeMap.get(end)).getLocation().equals(start)) {
