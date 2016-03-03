@@ -331,6 +331,7 @@ public class MapGraph {
 		PriorityQueue<MapNode> toExplore = new PriorityQueue<MapNode>();
 		HashSet<MapNode> visited = new HashSet<MapNode>();
 		MapNode curr = null;
+		visits = 0;
 		// Set distances to infinity.
 		for (GeographicPoint pt : getVertices()) {
 			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
@@ -348,6 +349,7 @@ public class MapGraph {
 			// if (curr is not visited)
 			if (!visited.contains(curr)) {
 				visited.add(curr);
+				visits++;
 				if (curr.equals(endNode))
 					break;
 				Set<MapNode> neighbors = getNeighbors(curr);
@@ -368,6 +370,8 @@ public class MapGraph {
 
 			}
 		}
+
+		System.out.println("Visited:" + visits + " nodes.");
 
 		if (!curr.equals(endNode)) {
 			System.out.println("No path found from " + start + " to " + goal);
@@ -473,7 +477,7 @@ public class MapGraph {
 						// Find straight line from node to target
 						Double distanceFromTarget = findStraightLineBetweenNodes(neighbor.getLocation(), endNode.getLocation());
 						// f(n) = g(n) + h(n)
-						if (distanceFromCurrent + curr.getActualDistance() < neighbor.getDistance()) {
+						if (distanceFromCurrent + curr.getDistance() < neighbor.getDistance()) {
 							neighbor.setActualDistance(distanceFromCurrent + curr.getActualDistance());
 							neighbor.setDistance(neighbor.getActualDistance() + distanceFromTarget);
 							parentMap.put(neighbor, curr);
@@ -492,7 +496,7 @@ public class MapGraph {
 
 		System.out.println("Visited " + visits + " nodes.");
 		visits = 0;
-		
+
 		// Reconstruct the parent path
 		List<GeographicPoint> path = reconstructPath(parentMap, startNode, endNode);
 
@@ -533,8 +537,8 @@ public class MapGraph {
 	 *         selected nodes
 	 */
 	public Double findStraightLineBetweenNodes(GeographicPoint start, GeographicPoint end) {
-		return Math.sqrt(Math.pow(start.getX(), 2.0) + Math.pow(start.getY(), 2.0))
-				+ Math.sqrt(Math.pow(end.getX(), 2.0) + Math.pow(end.getY(), 2.0));
+		// The actual geometric distance is multiplied by a factor of 100 to resemble distance in kilometers
+		return 100* Math.sqrt(Math.pow(end.getX() - start.getX(), 2.0) + Math.pow(end.getY() - start.getY(), 2.0));
 	}
 
 	// main method for testing
@@ -578,14 +582,15 @@ public class MapGraph {
 		// GeographicPoint start = new GeographicPoint(32.868629, -117.215393);
 		// GeographicPoint end = new GeographicPoint(32.868629, -117.215393);
 
-		//List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+		// List<GeographicPoint> route = theMap.dijkstra(new
+		// GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
 		List<GeographicPoint> route = theMap.aStarSearch(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
 		// List<GeographicPoint> route = theMap.dijkstra(start,end);
 		// List<GeographicPoint> route2 = theMap.aStarSearch(start,end);
 
-		System.out.println(route);
-		
-		//System.out.println(theMap.findStraightLineBetweenNodes(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0)));
+		 System.out.println(route);
+
+		//System.out.println(theMap.findStraightLineBetweenNodes(new GeographicPoint(5.0, 1.0), new GeographicPoint(8.0, -1.0)));
 
 	}
 
