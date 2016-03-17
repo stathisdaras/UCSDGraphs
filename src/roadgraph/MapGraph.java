@@ -279,6 +279,25 @@ public class MapGraph {
 		path.addFirst(start.getLocation());
 		return path;
 	}
+	
+	/**
+	 * Reconstruct a path from start and back using the parentMap
+	 *
+	 * @param parentMap
+	 *            the HashNode map of children and their parents
+	 * @param start
+	 *            The starting location
+	 * @return The list of intersections that form the shortest path from start to goal (including both start and goal).
+	 */
+
+	private List<GeographicPoint> reconstructTSPPath(HashMap<MapNode, MapNode> parentMap, MapNode start) {
+		LinkedList<GeographicPoint> path = new LinkedList<GeographicPoint>();
+		for (MapNode node : parentMap.keySet()) {
+			path.addFirst(node.getLocation());
+		}
+		path.addFirst(start.getLocation());
+		return path;
+	}
 
 	/**
 	 * Find the path from start to goal using Dijkstra's algorithm
@@ -448,24 +467,24 @@ public class MapGraph {
 	 */
 	public List<GeographicPoint> greedy(GeographicPoint start) {
 		// Setup - check validity of inputs
-		if (start == null )
+		if (start == null)
 			throw new NullPointerException("Cannot find route from or to null node");
 
 		// Get nodes from geographic points
 		MapNode startNode = pointNodeMap.get(start);
-		
+
 		// Validate
 		if (startNode == null) {
 			System.err.println("Start node " + start + " does not exist");
 			return null;
 		}
-		
+
 		// Initialize path
 		HashMap<MapNode, MapNode> parentMap = new HashMap<MapNode, MapNode>();
-		
+
 		// Call the actual greedy algorithm
 		boolean found = greedySearch(startNode, parentMap);
-		
+
 		// Handle result
 		if (!found) {
 			System.out.println("No path found from " + start);
@@ -473,8 +492,8 @@ public class MapGraph {
 		}
 
 		// Reconstruct the parent path
-		return reconstructPath(parentMap, startNode, startNode);
-		
+		return reconstructTSPPath(parentMap, startNode);
+
 	}
 
 	/**
@@ -487,18 +506,23 @@ public class MapGraph {
 	 * @return boolean result representing the existence (or not) of a valid path.
 	 */
 	private boolean greedySearch(roadgraph.MapNode startNode, HashMap<roadgraph.MapNode, roadgraph.MapNode> parentMap) {
-		
+
 		// Initialize: Priority queue (PQ), visited HashSet, parent HashMap, and
-		Queue<MapNode> toExplore = new LinkedList<MapNode>();
+		PriorityQueue<MapNode> toExplore = new PriorityQueue<MapNode>();
 		HashSet<MapNode> visited = new HashSet<MapNode>();
 		MapNode curr = null;
-		
+
 		// Keep track of how many nodes have been visited
-		int visits = 0;
-		
+		int visits = 1;
+
 		// Add closest neighbor to queue
+		startNode.setDistance(Double.POSITIVE_INFINITY);
 		toExplore.add(startNode);
-		
+		visited.add(startNode);
+		startNode.getClosestNeighbor().setDistance(0.0);
+		toExplore.add(startNode.getClosestNeighbor());
+		parentMap.put(startNode.getClosestNeighbor(), startNode);
+
 		// Search implementation
 		while (!toExplore.isEmpty()) {
 			curr = toExplore.remove();
@@ -506,24 +530,23 @@ public class MapGraph {
 			if (!visited.contains(curr)) {
 				visited.add(curr);
 				visits++;
-//				if (curr.equals(startNode))
-//					break;
 				// Find which of the unvisited neighbors is the closest and just add it to the path
 				Set<MapNode> unvisitedneighbors = findUnvisited(getNeighbors(curr), visited);
-				MapNode closestUnvisited = curr.getClosestNeighbor(unvisitedneighbors);
-						parentMap.put(closestUnvisited, curr);
-						toExplore.add(closestUnvisited);
+				MapNode closestUnvisited = curr.getClosestNeighbor(unvisitedneighbors, startNode);
+				closestUnvisited.setDistance(0.0);
+				parentMap.put(closestUnvisited, curr);
+				toExplore.add(closestUnvisited);
 			}
-			
+
 		}
-		
+
 		System.out.println("Visited: " + visits + " nodes.");
-		
+
 		return curr.equals(startNode);
 	}
 
 	private Set<MapNode> findUnvisited(Set<MapNode> neighbors, HashSet<MapNode> visited) {
-		Set<MapNode> unvisited =  new HashSet<MapNode>();
+		Set<MapNode> unvisited = new HashSet<MapNode>();
 		for (MapNode mapNode : neighbors) {
 			if (!visited.contains(mapNode)) {
 				unvisited.add(mapNode);
@@ -621,15 +644,16 @@ public class MapGraph {
 
 		// List<GeographicPoint> route = theMap.dijkstra(new
 		// GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
-		//List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
-		
+		// List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+
 		List<GeographicPoint> route = theMap.greedy(new GeographicPoint(1.0, 1.0));
 
 		// List<GeographicPoint> route = theMap.dijkstra(start,end);
-		//List<GeographicPoint> route2 = theMap.aStarSearch(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+		// List<GeographicPoint> route2 = theMap.aStarSearch(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0,
+		// -1.0));
 
 		System.out.println(route);
-	//	System.out.println(route2);
+		// System.out.println(route2);
 
 		// System.out.println(theMap.findStraightLineBetweenNodes(new
 		// GeographicPoint(5.0, 1.0), new GeographicPoint(8.0, -1.0)));

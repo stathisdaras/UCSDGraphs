@@ -139,11 +139,12 @@ class MapNode implements Comparable {
 
 	/**
 	 * Find the closest from a set of neighbors
+	 * @param startNode 
 	 * 
 	 * @param unVisitedneighbors
-	 * @return
+	 * @return closest neighbor
 	 */
-	public MapNode getClosestNeighbor(Set<MapNode> neighbors) {
+	public MapNode getClosestNeighbor(Set<MapNode> neighbors, MapNode startNode) {
 		double minDistance = Double.POSITIVE_INFINITY;
 		MapEdge shortestEdge = null;
 		Set<MapEdge> edges = new HashSet<MapEdge>();
@@ -153,7 +154,7 @@ class MapNode implements Comparable {
 			edges = getEdges();
 		} 
 		else if (neighbors.isEmpty()){
-			return this;
+			return startNode;
 		}else {
 			for (MapNode n : neighbors) {
 				edges.add(new MapEdge("demo", this, n));
@@ -162,6 +163,24 @@ class MapNode implements Comparable {
 
 		// Find shortest edge
 		for (MapEdge edge : edges) {
+			if (edge.getLength() < minDistance) {
+				shortestEdge = edge;
+			}
+		}
+		return shortestEdge.getOtherNode(this);
+	}
+	
+	/**
+	 * Find the closest neighbor
+	 * 
+	 * @return closest node
+	 */
+	public MapNode getClosestNeighbor() {
+		double minDistance = Double.POSITIVE_INFINITY;
+		MapEdge shortestEdge = null;
+
+		// Find shortest edge
+		for (MapEdge edge : getEdges()) {
 			if (edge.getLength() < minDistance) {
 				shortestEdge = edge;
 			}
