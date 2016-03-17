@@ -347,16 +347,15 @@ public class MapGraph {
 	}
 
 	/**
-	 * The search algorithm that is used both for a Disjkstra and a A* search.
-	 * Depending on wether the static flag isAStart iset to true or false, this
-	 * method will run the appropriate logic
+	 * The search algorithm that is used both for a Disjkstra and a A* search. Depending on wether the static flag
+	 * isAStart iset to true or false, this method will run the appropriate logic
 	 * 
 	 * @param start
 	 *            The starting location
 	 * @param goal
 	 *            The goal location
 	 * @param parentMap
-	 * 			  The HashNode map of children and their parent
+	 *            The HashNode map of children and their parent
 	 * @param nodeSearched
 	 *            A hook for visualization. See assignment instructions for how to use it.
 	 * @return boolean result representing the existence (or not) of a valid path.
@@ -369,7 +368,7 @@ public class MapGraph {
 
 		// Keep track of how many nodes have been visited
 		int visits = 0;
-		
+
 		// Set distances to infinity.
 		for (GeographicPoint pt : getVertices()) {
 			pointNodeMap.get(pt).setDistance(Double.POSITIVE_INFINITY);
@@ -415,7 +414,7 @@ public class MapGraph {
 		}
 
 		// System.out.println("Visited: " + visits + " nodes.");
-		
+
 		return curr.equals(endNode);
 	}
 
@@ -432,10 +431,105 @@ public class MapGraph {
 		// Dummy variable for calling the search algorithms
 		Consumer<GeographicPoint> temp = (x) -> {
 		};
-		
+
 		// Set flag to represent an A* search
 		isAStar = true;
 		return discoverPath(start, goal, temp);
+	}
+
+	/**
+	 * Find the path from start and back after visiting all nodes to the graph. Implementation of greedy algorithm in
+	 * order to solve the traveling salesman problem
+	 * 
+	 * @param start
+	 *            The starting location
+	 * @return The list of intersections that form a decent path (could be optimal) from start and back (including all
+	 *         nodes of the graph).
+	 */
+	public List<GeographicPoint> greedy(GeographicPoint start) {
+		// Setup - check validity of inputs
+		if (start == null )
+			throw new NullPointerException("Cannot find route from or to null node");
+
+		// Get nodes from geographic points
+		MapNode startNode = pointNodeMap.get(start);
+		
+		// Validate
+		if (startNode == null) {
+			System.err.println("Start node " + start + " does not exist");
+			return null;
+		}
+		
+		// Initialize path
+		HashMap<MapNode, MapNode> parentMap = new HashMap<MapNode, MapNode>();
+		
+		// Call the actual greedy algorithm
+		boolean found = greedySearch(startNode, parentMap);
+		
+		// Handle result
+		if (!found) {
+			System.out.println("No path found from " + start);
+			return null;
+		}
+
+		// Reconstruct the parent path
+		return reconstructPath(parentMap, startNode, startNode);
+		
+	}
+
+	/**
+	 * The search algorithm that implements greedy algorithm logic to solve the TSP problem
+	 * 
+	 * @param start
+	 *            The starting location
+	 * @param parentMap
+	 *            The HashNode map of children and their parent
+	 * @return boolean result representing the existence (or not) of a valid path.
+	 */
+	private boolean greedySearch(roadgraph.MapNode startNode, HashMap<roadgraph.MapNode, roadgraph.MapNode> parentMap) {
+		
+		// Initialize: Priority queue (PQ), visited HashSet, parent HashMap, and
+		Queue<MapNode> toExplore = new LinkedList<MapNode>();
+		HashSet<MapNode> visited = new HashSet<MapNode>();
+		MapNode curr = null;
+		
+		// Keep track of how many nodes have been visited
+		int visits = 0;
+		
+		// Add closest neighbor to queue
+		toExplore.add(startNode);
+		
+		// Search implementation
+		while (!toExplore.isEmpty()) {
+			curr = toExplore.remove();
+			// if (curr is not visited)
+			if (!visited.contains(curr)) {
+				visited.add(curr);
+				visits++;
+//				if (curr.equals(startNode))
+//					break;
+				// Find which of the unvisited neighbors is the closest and just add it to the path
+				Set<MapNode> unvisitedneighbors = findUnvisited(getNeighbors(curr), visited);
+				MapNode closestUnvisited = curr.getClosestNeighbor(unvisitedneighbors);
+						parentMap.put(closestUnvisited, curr);
+						toExplore.add(closestUnvisited);
+			}
+			
+		}
+		
+		System.out.println("Visited: " + visits + " nodes.");
+		
+		return curr.equals(startNode);
+	}
+
+	private Set<MapNode> findUnvisited(Set<MapNode> neighbors, HashSet<MapNode> visited) {
+		Set<MapNode> unvisited =  new HashSet<MapNode>();
+		for (MapNode mapNode : neighbors) {
+			if (!visited.contains(mapNode)) {
+				unvisited.add(mapNode);
+			}
+		}
+		return unvisited;
 	}
 
 	/**
@@ -515,7 +609,7 @@ public class MapGraph {
 		// Use this code in Week 3 End of Week Quiz
 		MapGraph theMap = new MapGraph();
 		System.out.print("DONE. \nLoading the map...");
-		GraphLoader.loadRoadMap("data/testdata/simpletest.map", theMap);
+		GraphLoader.loadRoadMap("data/testdata/dense.map", theMap);
 		System.out.println("DONE.");
 
 		// MapEdge edge = theMap.findEdgeByStartEndPoints(new
@@ -527,12 +621,15 @@ public class MapGraph {
 
 		// List<GeographicPoint> route = theMap.dijkstra(new
 		// GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
-		List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+		//List<GeographicPoint> route = theMap.dijkstra(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+		
+		List<GeographicPoint> route = theMap.greedy(new GeographicPoint(1.0, 1.0));
+
 		// List<GeographicPoint> route = theMap.dijkstra(start,end);
-		List<GeographicPoint> route2 = theMap.aStarSearch(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
+		//List<GeographicPoint> route2 = theMap.aStarSearch(new GeographicPoint(1.0, 1.0), new GeographicPoint(8.0, -1.0));
 
 		System.out.println(route);
-		System.out.println(route2);
+	//	System.out.println(route2);
 
 		// System.out.println(theMap.findStraightLineBetweenNodes(new
 		// GeographicPoint(5.0, 1.0), new GeographicPoint(8.0, -1.0)));
